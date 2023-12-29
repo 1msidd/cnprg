@@ -1,0 +1,162 @@
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class RSAEncryption {
+    public static int gcd(int a, int b) {
+        while (b != 0) {
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
+    }
+
+    public static int findCoprime(int phi) {
+        int e = 2;
+        while (e < phi) {
+            if (gcd(e, phi) == 1) {
+                return e;
+            }
+            e++;
+        }
+        return -1; // Indicate no coprime found
+    }
+
+    public static int findPrivateKey(int e, int phi) {
+        int d = 0;
+        int k = 1;
+        while (true) {
+            d = (1 + (k * phi)) / e;
+            if ((d * e) % phi == 1 && d > 0) {
+                return d;
+            }
+            k++;
+        }
+    }
+
+    public static long modularExp(long base, long exponent, long modulus) {
+        long result = 1;
+        while (exponent > 0) {
+            if (exponent % 2 == 1) {
+                result = (result * base) % modulus;
+            }
+            base = (base * base) % modulus;
+            exponent /= 2;
+        }
+        return result;
+    }
+
+    public static ArrayList<Long> rsaEncrypt(String plaintext, long e, long n) {
+        ArrayList<Long> ciphertext = new ArrayList<>();
+        for (char c : plaintext.toCharArray()) {
+            ciphertext.add(modularExp((long) c, e, n));
+        }
+        return ciphertext;
+    }
+
+    public static String rsaDecrypt(ArrayList<Long> ciphertext, long d, long n) {
+        StringBuilder plaintext = new StringBuilder();
+        for (long i : ciphertext) {
+            plaintext.append((char) modularExp(i, d, n));
+        }
+        return plaintext.toString();
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        long p = 17;
+        long q = 23;
+
+        long n = p * q;
+        long phi = (p - 1) * (q - 1);
+
+        long e = findCoprime((int) phi);
+
+        long d = findPrivateKey((int) e, (int) phi);
+
+        System.out.print("Enter plaintext: ");
+        String plaintext = scanner.nextLine();
+
+        ArrayList<Long> ciphertext = rsaEncrypt(plaintext, e, n);
+
+        System.out.print("Ciphertext: ");
+        for (long i : ciphertext) {
+            System.out.print(i + " ");
+        }
+        System.out.println();
+
+        String decryptedText = rsaDecrypt(ciphertext, d, n);
+
+        System.out.println("Decrypted Text: " + decryptedText);
+    }
+}
+
+
+//other method
+//change all teh public names accordingly to file names
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.Random;
+public class RSA
+{
+private BigInteger p,q,N,phi,e,d;
+private int bitlength=1024;
+private Random r;
+public RSA()
+{
+r=new Random();
+p=BigInteger.probablePrime(bitlength,r);
+q=BigInteger.probablePrime(bitlength,r);
+System.out.println("Prime number p is"+p);
+System.out.println("prime number q is"+q);
+N=p.multiply(q);
+phi=p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
+e=BigInteger.probablePrime(bitlength/2,r);
+while(phi.gcd(e).compareTo(BigInteger.ONE)>0&&e.compareTo(phi)<0)
+{
+e.add(BigInteger.ONE);
+}
+System.out.println("Public key is"+e);
+d=e.modInverse(phi);
+System.out.println("Private key is"+d);
+}
+public RSA(BigInteger e,BigInteger d,BigInteger N)
+{
+this.e=e;
+this.d=d;
+this.N=N;
+}
+public static void main(String[] args)throws IOException
+{
+RSA rsa=new RSA();
+DataInputStream in=new DataInputStream(System.in);
+String testString;
+System.out.println("Enter the plain text:");
+testString=in.readLine();
+System.out.println("Encrypting string:"+testString);
+System.out.println("string in bytes:"+bytesToString(testString.getBytes()));
+byte[] encrypted=rsa.encrypt(testString.getBytes());
+byte[] decrypted=rsa.decrypt(encrypted);
+System.out.println("Dcrypting Bytes:"+bytesToString(decrypted));
+System.out.println("Dcrypted string:"+new String(decrypted));
+}
+private static String bytesToString(byte[] encrypted)
+{
+String test=" ";
+for(byte b:encrypted)
+{
+test+=Byte.toString(b);
+}
+return test;
+}
+public byte[]encrypt(byte[]message)
+{
+return(new BigInteger(message)).modPow(e,N).toByteArray();
+}
+public byte[]decrypt(byte[]message)
+{
+return(new BigInteger(message)).modPow(d,N).toByteArray();
+}
+}
